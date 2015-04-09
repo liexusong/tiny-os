@@ -1,3 +1,2 @@
 # tiny-os
-My tiny OS
-==========
+This is a tiny OS

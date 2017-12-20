@@ -1,54 +1,61 @@
-AS=as -Iinclude
-LD=ld
-CC=gcc
-CPP=gcc -E -nostdinc -Iinclude
-CFLAGS=-Wall -pedantic -W -nostdlib -nostdinc -Wno-long-long -I include -fomit-frame-pointer
+#!Makefile
 
-KERNEL_OBJS= load.o init.o isr.o timer.o libcc.o scr.o kb.o task.o kprintf.o hd.o exceptions.o fs.o mm.o
+C_SOURCES = $(shell find . -name "*.c")
+C_OBJECTS = $(patsubst %.c, %.o, $(C_SOURCES))
+S_SOURCES = $(shell find . -name "*.s")
+S_OBJECTS = $(patsubst %.s, %.o, $(S_SOURCES))
 
-#.c.s:
-#	${CC} ${CFLAGS} -S -o $*.s $<
+CC = gcc
+LD = ld
+ASM = nasm
+
+C_FLAGS = -c -Wall -m32 -ggdb -gstabs+ -nostdinc -fno-builtin -fno-stack-protector -I include
+LD_FLAGS = -T scripts/kernel.ld -m elf_i386 -nostdlib
+ASM_FLAGS = -f elf -g -F stabs
+
+all: $(S_OBJECTS) $(C_OBJECTS) link update_image
+
+.c.o:
+	@echo compile c files...
+	$(CC) $(C_FLAGS) $< -o $@
 
 .s.o:
-	${AS} -a $< -o $*.o >$*.map
+	@echo compile asm file...
+	$(ASM) $(ASM_FLAGS) $<
 
-all: final.img
+link:
+	@echo link kernel...
+	$(LD) $(LD_FLAGS) $(S_OBJECTS) $(C_OBJECTS) -o tiny_kernel
 
-final.img: bootsect kernel
-	cat bootsect kernel > final.img
-	@wc -c final.img
-
-bootsect: bootsect.o
-	${LD} --oformat binary -N -e start -Ttext 0x7c00 -o bootsect $<
-
-kernel: ${KERNEL_OBJS}
-	${LD} --oformat binary -N -e pm_mode -Ttext 0x0000 -o $@ ${KERNEL_OBJS}
-	@wc -c kernel
-
+.PHONY:clean
 clean:
-	rm -f *.img *.map kernel bootsect *.o
+	$(RM) $(S_OBJECTS) $(C_OBJECTS) tiny_kernel
 
-dep:
-	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
-	(for i in *.c;do ${CPP} -M $$i;done) >> tmp_make
-	mv tmp_make Makefile
+.PHONY:update_image
+update_image:
+	sudo mount floppy.img /mnt/kernel
+	sudo cp tiny_kernel /mnt/kernel/tiny_kernel
+	sleep 1
+	sudo umount /mnt/kernel
 
-### Dependencies:
-exceptions.o: exceptions.c include/kprintf.h include/scr.h include/asm.h \
-  include/task.h include/kernel.h
-fs.o: fs.c include/fs.h include/hd.h include/kprintf.h include/scr.h \
-  include/kernel.h include/asm.h include/libcc.h
-hd.o: hd.c include/hd.h include/asm.h include/kprintf.h include/scr.h \
-  include/kernel.h
-init.o: init.c include/scr.h include/isr.h include/asm.h include/kernel.h \
-  include/task.h include/libcc.h include/timer.h include/hd.h \
-  include/kprintf.h include/kb.h include/fs.h include/mm.h
-kb.o: kb.c include/asm.h include/scr.h
-kprintf.o: kprintf.c include/scr.h include/asm.h include/kprintf.h
-libcc.o: libcc.c include/libcc.h
-mm.o: mm.c include/mm.h include/kprintf.h include/scr.h include/asm.h \
-  include/kernel.h include/fs.h include/hd.h include/libcc.h
-scr.o: scr.c include/asm.h include/scr.h include/libcc.h
-task.o: task.c include/task.h include/kernel.h include/asm.h
-timer.o: timer.c include/asm.h include/task.h include/kernel.h \
-  include/scr.h include/kprintf.h
+.PHONY:mount_image
+mount_image:
+	sudo mount floppy.img /mnt/kernel
+
+.PHONY:umount_image
+umount_image:
+	sudo umount /mnt/kernel
+
+.PHONY:qemu
+qemu:
+	qemu -fda floppy.img -boot a
+
+.PHONY:bochs
+bochs:
+	bochs -f tools/bochsrc.txt
+
+.PHONY:debug
+debug:
+	qemu -S -s -fda floppy.img -boot a &
+	sleep 1
+	cgdb -x tools/gdbinit

@@ -1,4 +1,3 @@
-#include <console.h>
 #include <printk.h>
 #include <math.h>
 
@@ -17,21 +16,37 @@ void printk(const char *format, ...)
 	}
 }
 
-char *itoa(int num)
+void cprintk(real_color_t color, const char * format, ...)
+{
+	static char buf[10240];
+	va_list args;
+	int len;
+
+	va_start(args, format);
+	len = vsprintf(buf, format, args);
+	va_end(args);
+
+	if (len > 0) {
+		console_write_color(buf, rc_black, color);
+	}
+}
+
+char *itoa(int num, int base)
 {
 	static char buf[36];
+	static char *hexc = "0123456789abcdef";
 	int tmp, last;
 	int start, end;
 
 	for (last = 0; ; last++) {
-		buf[last] = do_div(num, 10) + '0';
+		buf[last] = hexc[do_div(num, base)];
 		if (num == 0) {
 			break;
 		}
 	}
 
 	for (start = 0, end = last; 
-		start < end; start++, end--) 
+		 start < end; start++, end--) 
 	{
 		tmp = buf[start];
 		buf[start] = buf[end];
@@ -59,7 +74,14 @@ int vsprintf(char *buf, const char *format, va_list args)
 			switch (*format) {
 			case 'd':
 			case 'i':
-				str = itoa(va_arg(args, int));
+				str = itoa(va_arg(args, int), 10);
+				for (; *str; str++) {
+					buf[i++] = *str;
+				}
+				break;
+			case 'x':
+			case 'p':
+				str = itoa(va_arg(args, int), 16);
 				for (; *str; str++) {
 					buf[i++] = *str;
 				}

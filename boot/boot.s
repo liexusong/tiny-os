@@ -31,7 +31,7 @@ dd MBOOT_HEADER_FLAGS
 dd MBOOT_CHECKSUM
 
 [GLOBAL start]
-[GLOBAL glb_mboot_ptr]
+[GLOBAL global_mboot_ptr]
 [EXTERN kernel_start]
 
 start:
@@ -40,7 +40,7 @@ start:
 	mov esp, STACK_TOP
 	mov ebp, 0
 	and esp, 0FFFFFFF0H
-	mov [glb_mboot_ptr], ebx
+	mov [global_mboot_ptr], ebx
 	call kernel_start
 
 stop:
@@ -51,10 +51,7 @@ section .bss
 stack:
 	resb 32768
 
-glb_mboot_ptr:
+global_mboot_ptr:
 	resb 4
 
 STACK_TOP equ $-stack-1
-
-
-

@@ -2,13 +2,17 @@
 #include <console.h>
 #include <printk.h>
 #include <debug.h>
+#include <gdt.h>
 
 int kernel_start()
 {
-	console_clear();
+	init_gdt();
 	init_debug();
-	printk("This is Liexsuong's OS, version: %d\n", 12345678);
-	panic("Panic occur!!!");
+
+	console_clear();
+	
+	printk("This is Liexsuong's OS, version: %s\n", "v0.1");
+
 	return 0;
 }
 

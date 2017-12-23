@@ -53,6 +53,7 @@ ISR_NOERRCODE 31
 ISR_NOERRCODE 255
 
 [EXTERN isr_handler]
+[GLOBAL idt_flush]
 
 isr_common_stub:
 	pusha

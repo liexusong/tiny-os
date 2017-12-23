@@ -13,6 +13,15 @@ static void idt_set_gate(uint8_t num, uint32_t base,
 
 extern void idt_flush(uint32_t);
 
+void isr_handler(struct pt_regs *regs)
+{
+	if (interrupt_handlers[regs->int_no]) {
+		interrupt_handlers[regs->int_no](regs);
+	} else {
+		printk("Unknow interrupt: %d\n", regs->int_no);
+	}
+}
+
 void init_idt()
 {
 	bzero((uint8_t *)&interrupt_handlers, sizeof(interrupt_handlers));

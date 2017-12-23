@@ -67,6 +67,7 @@ isr_common_stub:
 	mov gs, ax
 	mov ss, ax
 
+	; Pass pt_regs* to isr_handler() function
 	push esp
 	call isr_handler
 	add esp, 4

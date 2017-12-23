@@ -52,6 +52,8 @@ ISR_NOERRCODE 31
 
 ISR_NOERRCODE 255
 
+[EXTERN isr_handler]
+
 isr_common_stub:
 	pusha
 	mov ax, ds

@@ -91,7 +91,8 @@ void console_write(char *str)
 	}
 }
 
-void console_write_color(char *str, real_color_t back, real_color_t fore)
+void console_write_color(char *str,
+	real_color_t back, real_color_t fore)
 {
 	while (*str) {
 		console_putc_color(*str++, back, fore);

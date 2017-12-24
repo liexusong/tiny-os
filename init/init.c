@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <gdt.h>
 #include <idt.h>
+#include <timer.h>
 
 int kernel_start()
 {
@@ -13,10 +14,11 @@ int kernel_start()
 
 	console_clear();
 
-	printk("This is Liexsuong's OS, version: %s\n", "v0.1");
+	printk("Welcome to Liexsuong's OS, version: %s\n", "v0.1");
 
-	__asm__ volatile ("int $0x3");
-	__asm__ volatile ("int $0x4");
+	init_timer(1);
+
+	__asm__ volatile ("sti");
 
 	return 0;
 }

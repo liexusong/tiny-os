@@ -5,18 +5,12 @@ static uint16_t *video_memory_addr = (uint16_t *)0xB8000;
 static uint8_t cursor_x = 0;
 static uint8_t cursor_y = 0;
 
-static void set_curosr(uint16_t x, uint16_t y)
-{
-	cursor_x = x;
-	cursor_y = y;
-}
-
 static void move_curosr()
 {
 	uint16_t cursor_location = cursor_y * 80 + cursor_x;
 
 	outb(0x3D4, 14);
-	outb(0x3D5, cursor_location >> 8);
+	outb(0x3D5, (cursor_location >> 8) & 0xFF);
 	outb(0x3D4, 15);
 	outb(0x3D5, cursor_location & 0xFF);
 }
@@ -36,6 +30,8 @@ static void scroll()
 		for (i = 24 * 80; i < 25 * 80; i++) {
 			video_memory_addr[i] = blank;
 		}
+
+		cursor_y = 24;
 	}
 }
 
@@ -49,7 +45,9 @@ void console_clear()
 		video_memory_addr[i] = blank;
 	}
 
-	set_curosr(0, 0);
+	cursor_x = 0;
+	cursor_y = 0;
+
 	move_curosr();
 }
 

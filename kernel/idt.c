@@ -58,14 +58,14 @@ void init_idt()
     outb(0x21, 0x0);
     outb(0xA1, 0x0);
 
-	bzero((uint8_t *)&interrupt_handlers, sizeof(interrupt_handlers));
+    bzero((uint8_t *)&interrupt_handlers, sizeof(interrupt_handlers));
 
-	idt_ptr.limit = sizeof(idt_entries) - 1;
-	idt_ptr.base = (uint32_t)&idt_entries;
+    idt_ptr.limit = sizeof(idt_entries) - 1;
+    idt_ptr.base = (uint32_t)&idt_entries;
 
-	bzero((int8_t *)&idt_entries, sizeof(idt_entries));
+    bzero((int8_t *)&idt_entries, sizeof(idt_entries));
 
-	idt_set_gate( 0, (uint32_t)isr0,  0x08, 0x8E);
+    idt_set_gate( 0, (uint32_t)isr0,  0x08, 0x8E);
     idt_set_gate( 1, (uint32_t)isr1,  0x08, 0x8E);
     idt_set_gate( 2, (uint32_t)isr2,  0x08, 0x8E);
     idt_set_gate( 3, (uint32_t)isr3,  0x08, 0x8E);

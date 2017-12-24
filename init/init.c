@@ -16,7 +16,7 @@ int kernel_start()
 
 	printk("Welcome to Liexsuong's OS, version: %s\n", "v0.1");
 
-	init_timer(1);
+	init_timer(200);
 
 	__asm__ volatile ("sti");
 

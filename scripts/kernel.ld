@@ -7,6 +7,7 @@ SECTIONS
 {
 	/* segment start point */
 	. = 0x100000;
+	PROVIDE( __kernel_mem_start = . );
 	.text :
 	{
 		*(.text)
@@ -33,5 +34,6 @@ SECTIONS
 		*(.stabstr)
 		. = ALIGN(4096);
 	}
+	PROVIDE( __kernel_mem_end = . );
 	/DISCARD/ : { *(.comment) *(.eh_frame) }
 }

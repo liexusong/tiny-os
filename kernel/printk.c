@@ -58,6 +58,8 @@ char *itoa(int num, int base)
 	return buf;
 }
 
+#define is_digit(c) ((c) >= '0' && (c) <= '9')
+
 int vsprintf(char *buf, const char *format, va_list args)
 {
 	int state, i;
@@ -75,6 +77,12 @@ int vsprintf(char *buf, const char *format, va_list args)
 			case 'd':
 			case 'i':
 				str = itoa(va_arg(args, int), 10);
+				for (; *str; str++) {
+					buf[i++] = *str;
+				}
+				break;
+			case 'o':
+				str = itoa(va_arg(args, int), 8);
 				for (; *str; str++) {
 					buf[i++] = *str;
 				}

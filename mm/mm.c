@@ -31,17 +31,22 @@ void show_memory_map()
 
 void init_mm()
 {
-	mmap_entry_t *mmap_start_addr = global_mboot_ptr->mmap_addr;
+	mmap_entry_t *mmap_start_addr = 
+			(mmap_entry_t *)global_mboot_ptr->mmap_addr;
 	mmap_entry_t *mmap_end_addr = 
-			global_mboot_ptr->mmap_addr + global_mboot_ptr->mmap_len;
+			(mmap_entry_t *)global_mboot_ptr->mmap_addr 
+			+ global_mboot_ptr->mmap_len;
 	mmap_entry_t *me;
+
+	uint32_t kernel_size = 
+			((uint32_t)(__kernel_mem_end - __kernel_mem_start)
+			+ MEM_PAGE_SIZE - 1) & PHY_PAGE_MASK;
 
 	for (me = mmap_start_addr; me < mmap_end_addr; me++) {
 
 		if (me->type == 1 && me->base_addr_low == 0x100000) {
 
-			uint32_t page_addr = me->base_addr_low 
-						+ (uint32_t)(__kernel_mem_end - __kernel_mem_start);
+			uint32_t page_addr = me->base_addr_low + kernel_size;
 			uint32_t page_end = me->base_addr_low + me->length_low;
 
 			while (page_addr < page_end && page_addr <= MEM_MAX_SIZE) {

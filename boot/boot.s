@@ -24,14 +24,14 @@ MBOOT_CHECKSUM     equ -(MBOOT_HEADER_MAGIC+MBOOT_HEADER_FLAGS)
 
 ; ----------- start here -------------
 [BITS 32]
-section .text ; code segment start
+section .init.text ; code segment start
 
 dd MBOOT_HEADER_MAGIC
 dd MBOOT_HEADER_FLAGS
 dd MBOOT_CHECKSUM
 
 [GLOBAL start]
-[GLOBAL global_mboot_ptr]
+[GLOBAL global_mboot_tmp]
 [EXTERN kernel_start]
 
 start:
@@ -40,18 +40,16 @@ start:
 	mov esp, STACK_TOP
 	mov ebp, 0
 	and esp, 0FFFFFFF0H
-	mov [global_mboot_ptr], ebx
+	mov [global_mboot_tmp], ebx
 	call kernel_start
 
 stop:
 	hlt
 	jmp stop
 
-section .bss
-stack:
-	resb 32768
-
-global_mboot_ptr:
-	resb 4
+section .init.data
+stack: times 1024 db 0
 
 STACK_TOP equ $-stack-1
+
+global_mboot_tmp: dd 0

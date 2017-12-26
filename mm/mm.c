@@ -12,7 +12,7 @@ uint32_t phy_page_count;
 
 void show_memory_map()
 {
-	uint32_t mmap_addr = global_mboot_ptr->mmap_addr;
+	uint32_t mmap_addr = global_mboot_ptr->mmap_addr + PAGE_OFFSET;
 	uint32_t mmap_len = global_mboot_ptr->mmap_len;
 	mmap_entry_t *mmap;
 
@@ -60,7 +60,9 @@ void init_mm()
 
 uint32_t alloc_page()
 {
-	assert(mmap_stack_top != 0, "out of memory");
+	if (mmap_stack_top == 0) {
+		return 0;
+	}
 
 	uint32_t page = mmap_stack[mmap_stack_top--];
 
@@ -69,7 +71,46 @@ uint32_t alloc_page()
 
 void free_page(uint32_t page)
 {
-	assert(mmap_stack_top != PAGE_MAX_SIZE, "out of mm stack");
+	if (mmap_stack_top == PAGE_MAX_SIZE) {
+		return;
+	}
 
 	mmap_stack[++mmap_stack_top] = page;
+}
+
+void page_fault(struct pt_regs *regs)
+{
+	uint32_t cr2;
+
+	__asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
+
+	printk(
+		"Page fault at 0x%x, virtual faulting address 0x%x\n", regs->eip, cr2);
+	printk("Error code: %x\n", regs->err_code);
+
+	if (!(regs->err_code & 0x1)) {
+		cprintk(rc_red, "Because the page wasn't present.\n");
+	}
+
+	if (regs->err_code & 0x2) {
+		cprintk(rc_red, "Write error.\n");
+	} else {
+		cprintk(rc_red, "Read error.\n");
+	}
+
+	if (regs->err_code & 0x4) {
+		cprintk(rc_red, "Fault in user mode.\n");
+	} else {
+		cprintk(rc_red, "Fault in kernel mode.\n");
+	}
+
+	if (regs->err_code & 0x8) {
+		cprintk(rc_red, "Reserved bits being overwritten.\n");
+	}
+
+	if (regs->err_code & 0x10) {
+		cprintk(rc_red, "The fault occurred during an instruction fetch.\n");
+	}
+
+	while (0);
 }

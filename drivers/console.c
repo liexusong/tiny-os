@@ -1,7 +1,8 @@
 #include <common.h>
 #include <console.h>
+#include <mm.h>
 
-static uint16_t *video_memory_addr = (uint16_t *)0xB8000;
+static uint16_t *video_memory_addr = (uint16_t *)(0xB8000 + PAGE_OFFSET);
 static uint8_t cursor_x = 0;
 static uint8_t cursor_y = 0;
 

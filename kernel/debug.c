@@ -3,6 +3,7 @@
 #include <common.h>
 #include <debug.h>
 #include <printk.h>
+#include <mm.h>
 
 static void print_stack_trace();
 static elf_t kernel_elf;
@@ -16,15 +17,15 @@ elf_t elf_from_multiboot(multiboot_t *mb)
 	uint32_t shstrtab = sh[mb->shndx].addr;
 
 	for (i = 0; i < mb->num; i++) {
-		const char *name = (const char *)(shstrtab + sh[i].name);
+		const char *name = (const char *)(shstrtab + sh[i].name + PAGE_OFFSET);
 
 		if (!strcmp(name, ".strtab")) {
-			elf.strtab = (const char *)sh[i].addr;
+			elf.strtab = (const char *)(sh[i].addr + PAGE_OFFSET);
 			elf.strtabsz = sh[i].size;
 		}
 
 		if (!strcmp(name, ".symtab")) {
-			elf.symtab = (elf_symbol_t *)sh[i].addr;
+			elf.symtab = (elf_symbol_t *)(sh[i].addr + PAGE_OFFSET);
 			elf.symtabsz = sh[i].size;
 		}
 	}
@@ -87,7 +88,7 @@ void panic(const char *info)
 	print_cur_status();
 	cprintk(rc_red, "******************************\n");
 
-	for ( ; ; ) ;
+	while (1);
 }
 
 static void print_stack_trace()

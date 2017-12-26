@@ -1,5 +1,6 @@
 #include <printk.h>
 #include <math.h>
+#include <string.h>
 
 void printk(const char *format, ...)
 {
@@ -53,7 +54,7 @@ char *itoa(int num, int base)
 		buf[end] = tmp;
 	}
 
-	buf[last+1] = '\0';
+	buf[last+1] = 0;
 
 	return buf;
 }

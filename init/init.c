@@ -11,11 +11,11 @@
 multiboot_t *global_mboot_ptr;
 char kernel_stack[STACK_SIZE];
 
-__attribute__((section(".init.data"))) 
+__attribute__((section(".init.data")))
 	pgd_t *pgd_tmp = (pgd_t *)0x1000;
-__attribute__((section(".init.data"))) 
+__attribute__((section(".init.data")))
 	pgd_t *pte_low = (pgd_t *)0x2000;
-__attribute__((section(".init.data"))) 
+__attribute__((section(".init.data")))
 	pgd_t *pte_hig = (pgd_t *)0x3000;
 
 void kernel_init()
@@ -23,37 +23,33 @@ void kernel_init()
 	init_gdt();
 	init_idt();
 	init_debug();
+	init_mm();
+	init_vmm();
 
 	console_clear();
 
-	cprintk(rc_light_brown, 
+	cprintk(rc_light_brown,
 		"Welcome to SuperSong's OS, version: %s\n\n", "v0.1");
 
 	init_timer(200);
 
 	//__asm__ volatile ("sti");
 
-	cprintk(rc_light_cyan, 
+	cprintk(rc_light_cyan,
 		"kernel in memory start: 0x%x\n", __kernel_mem_start);
-	cprintk(rc_light_cyan, 
+	cprintk(rc_light_cyan,
 		"kernel in memory end: 0x%x\n", __kernel_mem_end);
-	cprintk(rc_light_cyan, 
-		"kernel in memory_used: %d KBs\n", 
+	cprintk(rc_light_cyan,
+		"kernel in memory_used: %d KBs\n",
 		(__kernel_mem_end - __kernel_mem_start + 1023) / 1024);
 
-	printk("mboot pointer: 0x%x, 0x%x, 0x%x\n", 
-		global_mboot_ptr, global_mboot_tmp, PAGE_OFFSET);
+	show_memory_map();
 
-	init_mm();
-	init_vmm();
-
-	//show_memory_map();
-
-	cprintk(rc_red, 
+	cprintk(rc_red,
 			"\nThe count of physical memory pages is: %d\n\n", phy_page_count);
 
 	while (1) {
-		//__asm__ volatile ("hlt");
+		__asm__ volatile ("hlt");
 	}
 }
 
@@ -73,17 +69,17 @@ void kernel_init()
 			"xor %%ebp, %%ebp" : : "r"((stack)));            \
 	} while (0)
 
-__attribute__((section(".init.text"))) 
+__attribute__((section(".init.text")))
 int kernel_start()
 {
 	int i;
 
 	// point to low address (0GB ~ ...)
-	pgd_tmp[PGD_INDEX(0)] = 
+	pgd_tmp[PGD_INDEX(0)] =
 			(uint32_t)pte_low | PAGE_PRESENT | PAGE_WRITE;
 
 	// point to high address (3GB ~ 4GB)
-	pgd_tmp[PGD_INDEX(PAGE_OFFSET)] = 
+	pgd_tmp[PGD_INDEX(PAGE_OFFSET)] =
 			(uint32_t)pte_hig | PAGE_PRESENT | PAGE_WRITE;
 
 	for (i = 0; i < 1024; i++) {

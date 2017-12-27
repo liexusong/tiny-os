@@ -7,6 +7,7 @@
 #include <timer.h>
 #include <mm.h>
 #include <multiboot.h>
+#include <heap.h>
 
 multiboot_t *global_mboot_ptr;
 char kernel_stack[STACK_SIZE];
@@ -20,11 +21,14 @@ __attribute__((section(".init.data")))
 
 void kernel_init()
 {
+	void *addr1, *addr2;
+
 	init_gdt();
 	init_idt();
 	init_debug();
 	init_mm();
 	init_vmm();
+	init_heap();
 
 	console_clear();
 
@@ -47,6 +51,18 @@ void kernel_init()
 
 	cprintk(rc_red,
 			"\nThe count of physical memory pages is: %d\n\n", phy_page_count);
+
+	addr1 = kmalloc(100);
+	printk("kmalloc() 100 byte in 0x%x\n", addr1);
+
+	addr2 = kmalloc(200);
+	printk("kmalloc() 200 byte in 0x%x\n", addr2);
+
+	kfree(addr1);
+	kfree(addr2);
+
+	addr1 = kmalloc(100);
+	printk("kmalloc() 100 byte in 0x%x\n", addr1);
 
 	while (1) {
 		__asm__ volatile ("hlt");
@@ -76,11 +92,11 @@ int kernel_start()
 
 	// point to low address (0GB ~ ...)
 	pgd_tmp[PGD_INDEX(0)] =
-			(uint32_t)pte_low | PAGE_PRESENT | PAGE_WRITE;
+		(uint32_t)pte_low | PAGE_PRESENT | PAGE_WRITE;
 
 	// point to high address (3GB ~ 4GB)
 	pgd_tmp[PGD_INDEX(PAGE_OFFSET)] =
-			(uint32_t)pte_hig | PAGE_PRESENT | PAGE_WRITE;
+		(uint32_t)pte_hig | PAGE_PRESENT | PAGE_WRITE;
 
 	for (i = 0; i < 1024; i++) {
 		pte_low[i] = (i << 12) | PAGE_PRESENT | PAGE_WRITE;
@@ -95,7 +111,8 @@ int kernel_start()
 	page_on();
 	set_esp(((uint32_t)kernel_stack + STACK_SIZE) & 0xFFFFFFF0);
 
-	global_mboot_ptr = (uint32_t)global_mboot_tmp + PAGE_OFFSET;
+	global_mboot_ptr = 
+		(multiboot_t *)((uint32_t)global_mboot_tmp + PAGE_OFFSET);
 
 	kernel_init();
 

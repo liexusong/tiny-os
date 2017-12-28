@@ -26,4 +26,9 @@ static inline uint16_t inw(uint16_t port)
 	return ret;
 }
 
+static inline void enable_intr()
+{
+	__asm__ volatile ("sti");
+}
+
 #endif

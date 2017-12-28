@@ -35,6 +35,7 @@ typedef uint32_t pte_t;
 // Get __kernel_mem_start and __kernel_mem_end address
 extern uint8_t __kernel_mem_start[], __kernel_mem_end[];
 extern uint32_t phy_page_count;
+extern uint32_t kernel_stack_top;
 extern pgd_t pgd_k[PGD_SIZE];
 
 // memory manager functions

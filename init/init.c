@@ -8,9 +8,12 @@
 #include <mm.h>
 #include <multiboot.h>
 #include <heap.h>
+#include <sched.h>
+#include <common.h>
 
 multiboot_t *global_mboot_ptr;
 char kernel_stack[STACK_SIZE];
+uint32_t kernel_stack_top;
 
 __attribute__((section(".init.data")))
 	pgd_t *pgd_tmp = (pgd_t *)0x1000;
@@ -19,16 +22,22 @@ __attribute__((section(".init.data")))
 __attribute__((section(".init.data")))
 	pgd_t *pte_hig = (pgd_t *)0x3000;
 
+int thread(void *arg)
+{
+	while (1) {
+		cprintk(rc_green, "Thread2\n");
+	}
+}
+
 void kernel_init()
 {
-	void *addr1, *addr2;
-
 	init_gdt();
 	init_idt();
 	init_debug();
 	init_mm();
 	init_vmm();
 	init_heap();
+	init_sched();
 
 	console_clear();
 
@@ -36,8 +45,6 @@ void kernel_init()
 		"Welcome to SuperSong's OS, version: %s\n\n", "v0.1");
 
 	init_timer(200);
-
-	//__asm__ volatile ("sti");
 
 	cprintk(rc_light_cyan,
 		"kernel in memory start: 0x%x\n", __kernel_mem_start);
@@ -52,17 +59,13 @@ void kernel_init()
 	cprintk(rc_red,
 			"\nThe count of physical memory pages is: %d\n\n", phy_page_count);
 
-	addr1 = kmalloc(100);
-	printk("kmalloc() 100 byte in 0x%x\n", addr1);
+	kthread_create(thread, NULL);
 
-	addr2 = kmalloc(200);
-	printk("kmalloc() 200 byte in 0x%x\n", addr2);
+	enable_intr();
 
-	kfree(addr1);
-	kfree(addr2);
-
-	addr1 = kmalloc(100);
-	printk("kmalloc() 100 byte in 0x%x\n", addr1);
+	while (1) {
+		cprintk(rc_red, "Thraed1\n");
+	}
 
 	while (1) {
 		__asm__ volatile ("hlt");
@@ -109,7 +112,10 @@ int kernel_start()
 	// set page directory
 	set_cr3(pgd_tmp);
 	page_on();
-	set_esp(((uint32_t)kernel_stack + STACK_SIZE) & 0xFFFFFFF0);
+
+	kernel_stack_top = ((uint32_t)kernel_stack + STACK_SIZE) & 0xFFFFFFF0;
+
+	set_esp(kernel_stack_top);
 
 	global_mboot_ptr = 
 		(multiboot_t *)((uint32_t)global_mboot_tmp + PAGE_OFFSET);

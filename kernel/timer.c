@@ -2,11 +2,11 @@
 #include <idt.h>
 #include <types.h>
 #include <printk.h>
+#include <sched.h>
 
 void timer_callback(struct pt_regs *regs)
 {
-	static uint32_t tick = 0;
-	cprintk(rc_red, "Tick: %d\n", tick++);
+	schedule();
 }
 
 void init_timer(uint32_t hz)
